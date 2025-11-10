@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 Dualen
+# 🧠 Hierarchical-SSL
 
 **A hierarchical self-supervised learning system for text**
 
@@ -32,7 +32,7 @@
 
 ## 🎯 Overview
 
-Dualen implements a three-layer predictive architecture that learns increasingly abstract representations:
+Hierarchical-SSL implements a three-layer predictive architecture that learns increasingly abstract representations:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -304,7 +304,7 @@ print(f"Embeddings shape: {embeddings.shape}")  # [2, 768]
 ## 📁 Project Structure
 
 ```
-dualen/
+hierarchical-ssl/
 ├── jepa/                    # JEPA model (Layer 1)
 │   ├── __init__.py
 │   ├── context.py           # Context encoder
@@ -437,6 +437,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **Made with ❤️ for self-supervised learning**
 
-[⬆ Back to Top](#-dualen)
+[⬆ Back to Top](#-hierarchical-ssl)
 
 </div>
