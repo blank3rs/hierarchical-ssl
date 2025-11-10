@@ -1,0 +1,63 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*.pyc
+build/
+dist/
+wheels/
+*.egg-info
+.eggs/
+
+# Virtual environments
+.venv
+venv/
+env/
+ENV/
+
+# Local directory
+local/
+*/local
+./local
+
+# ML/Data files
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.hdf5
+data/
+datasets/
+*.csv
+*.json
+*.pkl
+*.pickle
+
+# Logs and outputs
+logs/
+*.log
+wandb/
+tensorboard/
+runs/
+outputs/
+results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+*.env
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db

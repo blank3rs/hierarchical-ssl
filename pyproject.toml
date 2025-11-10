@@ -1,0 +1,15 @@
+[project]
+name = "dualen"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "datasets>=4.4.1",
+    "google-genai>=1.49.0",
+    "numpy>=2.3.4",
+    "python-dotenv>=1.2.1",
+    "torch>=2.9.0",
+    "tqdm>=4.67.1",
+    "transformers>=4.57.1",
+]
