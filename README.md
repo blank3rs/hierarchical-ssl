@@ -1,54 +1,30 @@
-<div align="center">
+# Hierarchical-SSL
 
-# 🧠 Hierarchical-SSL
-
-**A hierarchical self-supervised learning system for text**
-
-*Learn perception → world dynamics → value estimation*
+A hierarchical self-supervised learning system for text that learns perception, world dynamics, and value estimation in three stages.
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9+-orange.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[Quick Start](#-quick-start) • [Architecture](#-architecture) • [Examples](#-examples) • [Roadmap](#-roadmap)
+## Overview
 
-</div>
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#-overview)
-- [Quick Start](#-quick-start)
-- [Architecture](#-architecture)
-- [Examples](#-examples)
-- [Configuration](#-configuration)
-- [Roadmap](#-roadmap)
-- [Project Structure](#-project-structure)
-- [Technical Details](#-technical-details)
-- [Contributing](#-contributing)
-
----
-
-## 🎯 Overview
-
-Hierarchical-SSL implements a three-layer predictive architecture that learns increasingly abstract representations:
+This project implements a three-layer predictive architecture that learns increasingly abstract representations:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Layer 3: Value Model                     │
-│              "What it means for me" 🚧                      │
+│              "What it means for me"                         │
 │         Identifies valuable states for exploration          │
 └───────────────────────┬─────────────────────────────────────┘
                         │
 ┌───────────────────────▼─────────────────────────────────────┐
 │                   Layer 2: World Model                      │
-│                  "What it means" 🚧                          │
+│                  "What it means"                             │
 │            Learns how states evolve over time               │
 └───────────────────────┬─────────────────────────────────────┘
                         │
 ┌───────────────────────▼─────────────────────────────────────┐
-│              Layer 1: Perception (JEPA) ✅                   │
+│              Layer 1: Perception (JEPA)                      │
 │                      "What"                                  │
 │         Learns rich representations from text               │
 └─────────────────────────────────────────────────────────────┘
@@ -58,13 +34,11 @@ Hierarchical-SSL implements a three-layer predictive architecture that learns in
 
 | Layer | Status | Description |
 |:-----:|:-----:|-------------|
-| **Layer 1** | ✅ **Complete** | JEPA - Self-supervised text representations |
-| **Layer 2** | 🚧 **Planned** | World model - State transition prediction |
-| **Layer 3** | 🚧 **Planned** | Value model - Reward estimation |
+| **Layer 1** | Complete | JEPA - Self-supervised text representations |
+| **Layer 2** | Planned | World model - State transition prediction |
+| **Layer 3** | Planned | Value model - Reward estimation |
 
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -110,13 +84,11 @@ embeddings = model.get_representations(
 print(f"Embedding shape: {embeddings.shape}")  # [batch_size, hidden_dim]
 ```
 
----
+## Architecture
 
-## 📐 Architecture
+### Layer 1: Perception (JEPA)
 
-### Layer 1: Perception (JEPA) ✅
-
-**What it does**: Learns rich text representations by predicting masked spans from context.
+This layer learns rich text representations by predicting masked spans from context. It's based on the JEPA (Joint-Embedding Predictive Architecture) approach.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -142,28 +114,28 @@ print(f"Embedding shape: {embeddings.shape}")  # [batch_size, hidden_dim]
                     └─────────────────┘
 ```
 
-**Key Components**:
-- **Context Encoder**: 12-layer transformer processes visible text with `[MASK]` tokens
-- **Target Encoder**: Same architecture, frozen, updated via EMA (momentum=0.996)
-- **Predictor**: Lightweight 2-layer transformer decoder
-- **Loss**: VICReg-style with variance and covariance regularization
+**Components**:
+- **Context Encoder**: 12-layer transformer that processes visible text with `[MASK]` tokens
+- **Target Encoder**: Same architecture, but frozen and updated via EMA (momentum=0.996) to provide stable targets
+- **Predictor**: Lightweight 2-layer transformer decoder that predicts target embeddings from context
+- **Loss**: VICReg-style loss with variance and covariance regularization to prevent collapse
 
 **Features**:
-- ✅ Self-supervised (no labels needed)
-- ✅ Prevents representational collapse
-- ✅ Produces rich contextualized embeddings
-- ✅ EMA target encoder for stable training
+- Self-supervised (no labels needed)
+- Prevents representational collapse
+- Produces rich contextualized embeddings
+- EMA target encoder ensures stable training
 
-### Layer 2: World Model 🚧
+### Layer 2: World Model
 
-**Goal**: Learn how states evolve over time in embedding space.
+The goal here is to learn how states evolve over time in embedding space. This layer takes sequential pairs of embeddings and learns to predict the next state.
 
 **Data**: Sequential pairs `(s_t, a_t, s_{t+1})`
 - `s_t`: Current state embedding (from Layer 1)
 - `a_t`: Optional action
 - `s_{t+1}`: Next state embedding
 
-**Model**: Small transformer/RNN predictor
+**Model**: Small transformer or RNN predictor
 ```
 z_t = encoder(s_t)
 ẑ_{t+1} = f_θ(z_t, a_t)
@@ -171,21 +143,19 @@ ẑ_{t+1} = f_θ(z_t, a_t)
 
 **Loss**: `L_world = ||z_{t+1} - f_θ(z_t, a_t)||²`
 
-### Layer 3: Value Model 🚧
+### Layer 3: Value Model
 
-**Goal**: Attach value/relevance to latent states.
+This layer attaches value or relevance to latent states. It learns which states are worth exploring or avoiding.
 
 **Rewards**:
-- **External**: Task success, human preferences
+- **External**: Task success, human preferences, etc.
 - **Intrinsic**: `r_t = |E_{t-1} - E_t|` (world model prediction error change)
 
-**Model**: Value function `V_φ(z_t)` + optional policy `π_ψ(a_t|z_t)`
+**Model**: Value function `V_φ(z_t)` plus an optional policy `π_ψ(a_t|z_t)`
 
 **Training**: TD learning `L_value = (r_t + γV_φ(z_{t+1}) - V_φ(z_t))²`
 
----
-
-## 💡 Examples
+## Examples
 
 ### Basic Training
 
@@ -243,9 +213,7 @@ with torch.no_grad():
 print(f"Embeddings shape: {embeddings.shape}")  # [2, 768]
 ```
 
----
-
-## ⚙️ Configuration
+## Configuration
 
 ### Training Arguments
 
@@ -272,11 +240,9 @@ print(f"Embeddings shape: {embeddings.shape}")  # [2, 768]
 | `--dataset_config` | `wikitext-2-raw-v1` | Dataset configuration |
 | `--max_samples` | `None` | Limit number of samples |
 
----
+## Roadmap
 
-## 🗺️ Roadmap
-
-### ✅ Completed
+### Completed
 - [x] JEPA architecture implementation
 - [x] Context encoder (transformer-based)
 - [x] Target encoder with EMA updates
@@ -286,12 +252,12 @@ print(f"Embeddings shape: {embeddings.shape}")  # [2, 768]
 - [x] Checkpoint saving/loading
 - [x] Training metrics logging
 
-### 🚧 In Progress
+### In Progress
 - [ ] Layer 2: World model implementation
 - [ ] Sequential dataset utilities
 - [ ] State transition prediction
 
-### 📅 Planned
+### Planned
 - [ ] Layer 3: Value model implementation
 - [ ] Intrinsic reward computation
 - [ ] Policy network (optional)
@@ -299,9 +265,7 @@ print(f"Embeddings shape: {embeddings.shape}")  # [2, 768]
 - [ ] Evaluation benchmarks
 - [ ] Pre-trained model releases
 
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 hierarchical-ssl/
@@ -323,9 +287,7 @@ hierarchical-ssl/
 └── README.md
 ```
 
----
-
-## 🔬 Technical Details
+## Technical Details
 
 ### JEPA Architecture
 
@@ -365,15 +327,13 @@ The model uses three mechanisms to prevent representational collapse:
 
 ### Performance Tips
 
-- 🚀 Use GPU/MPS for faster training
-- 📊 Start with smaller `max_length` for faster iteration
-- 📈 Monitor `val_cosine_sim` - should increase during training
-- 🔍 Check `val_pred_std` and `val_target_std` - should stay above 0.3
-- 💾 Save checkpoints regularly for recovery
+- Use GPU/MPS for faster training
+- Start with smaller `max_length` for faster iteration
+- Monitor `val_cosine_sim` - should increase during training
+- Check `val_pred_std` and `val_target_std` - should stay above 0.3
+- Save checkpoints regularly for recovery
 
----
-
-## 📊 Monitoring Training
+## Monitoring Training
 
 Training metrics are logged to `checkpoints/training_history.json`:
 
@@ -394,9 +354,7 @@ Training metrics are logged to `checkpoints/training_history.json`:
 - `val_cosine_sim`: Cosine similarity between predicted and target (higher is better, target: >0.8)
 - `val_pred_std` / `val_target_std`: Embedding standard deviation (should be >0.3)
 
----
-
-## 🛠️ Requirements
+## Requirements
 
 - Python >= 3.12
 - PyTorch >= 2.9.0
@@ -405,9 +363,7 @@ Training metrics are logged to `checkpoints/training_history.json`:
 - tqdm >= 4.67.1
 - numpy >= 2.3.4
 
----
-
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! This is a research project exploring hierarchical self-supervised learning.
 
@@ -417,26 +373,12 @@ Contributions are welcome! This is a research project exploring hierarchical sel
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
----
-
-## 📚 References
+## References
 
 - **JEPA**: Joint-Embedding Predictive Architecture (LeCun et al.)
 - **VICReg**: Variance-Invariance-Covariance Regularization
 - Self-supervised learning for text representations
 
----
-
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-<div align="center">
-
-**Made with ❤️ for self-supervised learning**
-
-[⬆ Back to Top](#-hierarchical-ssl)
-
-</div>
